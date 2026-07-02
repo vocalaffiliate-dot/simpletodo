@@ -4,38 +4,63 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TickTask — Colorful Timed To-Dos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg1: #0f0c29;
-    --bg2: #302b63;
-    --bg3: #24243e;
-    --card-radius: 20px;
+    --bg1: #0d0a24;
+    --bg2: #2b2660;
+    --bg3: #1e1b3a;
+    --card-radius: 24px;
+    --font: "Plus Jakarta Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  html { font-size: 17px; }
+
   body {
     min-height: 100vh;
-    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    font-family: var(--font);
     background: linear-gradient(135deg, var(--bg1), var(--bg2), var(--bg3));
     background-attachment: fixed;
     color: #fff;
-    padding: 40px 16px 80px;
+    padding: 48px 16px 90px;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
   }
 
-  .container { max-width: 720px; margin: 0 auto; }
+  /* soft ambient glow blobs */
+  body::before, body::after {
+    content: "";
+    position: fixed;
+    width: 520px;
+    height: 520px;
+    border-radius: 50%;
+    filter: blur(130px);
+    opacity: .32;
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::before { background: #ff6ec4; top: -180px; left: -160px; }
+  body::after  { background: #4adede; bottom: -200px; right: -160px; }
 
-  header { text-align: center; margin-bottom: 32px; }
+  .container { max-width: 760px; margin: 0 auto; position: relative; z-index: 1; }
+
+  header { text-align: center; margin-bottom: 36px; }
 
   header h1 {
-    font-size: clamp(2rem, 5vw, 3rem);
+    font-size: clamp(2.6rem, 6vw, 3.8rem);
     font-weight: 800;
+    letter-spacing: -1px;
     background: linear-gradient(90deg, #ff6ec4, #7873f5, #4adede, #ffe66d);
     background-size: 300% 300%;
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: gradientShift 6s ease infinite;
+    filter: drop-shadow(0 4px 22px rgba(120,115,245,.45));
   }
 
   @keyframes gradientShift {
@@ -43,98 +68,126 @@
     50% { background-position: 100% 50%; }
   }
 
-  header p { color: rgba(255,255,255,.6); margin-top: 8px; font-size: 1rem; }
+  header p {
+    color: rgba(255,255,255,.66);
+    margin-top: 10px;
+    font-size: 1.15rem;
+    font-weight: 500;
+  }
 
   /* ---------- Add form ---------- */
   .add-form {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     flex-wrap: wrap;
-    background: rgba(255,255,255,.08);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,.15);
+    background: rgba(255,255,255,.07);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,.14);
     border-radius: var(--card-radius);
-    padding: 16px;
-    margin-bottom: 28px;
-    box-shadow: 0 8px 32px rgba(0,0,0,.3);
+    padding: 18px;
+    margin-bottom: 32px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.35);
   }
 
   .add-form input[type="text"] {
-    flex: 1 1 240px;
-    background: rgba(255,255,255,.1);
-    border: 1px solid rgba(255,255,255,.2);
-    border-radius: 12px;
-    padding: 14px 16px;
-    font-size: 1rem;
+    flex: 1 1 250px;
+    background: rgba(255,255,255,.09);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 14px;
+    padding: 16px 18px;
+    font-size: 1.05rem;
+    font-family: inherit;
+    font-weight: 500;
     color: #fff;
     outline: none;
-    transition: border-color .2s, box-shadow .2s;
+    transition: border-color .2s, box-shadow .2s, background .2s;
   }
 
-  .add-form input[type="text"]::placeholder { color: rgba(255,255,255,.45); }
+  .add-form input[type="text"]::placeholder { color: rgba(255,255,255,.42); }
 
   .add-form input[type="text"]:focus {
-    border-color: #7873f5;
-    box-shadow: 0 0 0 3px rgba(120,115,245,.3);
+    border-color: #9a95ff;
+    background: rgba(255,255,255,.13);
+    box-shadow: 0 0 0 4px rgba(120,115,245,.28);
   }
 
   .minutes-wrap {
     display: flex;
     align-items: center;
     gap: 6px;
-    background: rgba(255,255,255,.1);
-    border: 1px solid rgba(255,255,255,.2);
-    border-radius: 12px;
-    padding: 0 12px;
+    background: rgba(255,255,255,.09);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 14px;
+    padding: 0 14px;
+    transition: border-color .2s, box-shadow .2s;
+  }
+
+  .minutes-wrap:focus-within {
+    border-color: #9a95ff;
+    box-shadow: 0 0 0 4px rgba(120,115,245,.28);
   }
 
   .minutes-wrap input {
-    width: 56px;
+    width: 62px;
     background: transparent;
     border: none;
     color: #fff;
-    font-size: 1rem;
+    font-size: 1.1rem;
+    font-family: inherit;
+    font-weight: 700;
     text-align: center;
     outline: none;
-    padding: 14px 0;
+    padding: 16px 0;
   }
 
-  .minutes-wrap span { color: rgba(255,255,255,.55); font-size: .85rem; }
+  .minutes-wrap span { color: rgba(255,255,255,.55); font-size: .95rem; font-weight: 500; }
 
   .btn-add {
     background: linear-gradient(135deg, #ff6ec4, #7873f5);
     border: none;
-    border-radius: 12px;
+    border-radius: 14px;
     color: #fff;
-    font-size: 1rem;
-    font-weight: 700;
-    padding: 14px 26px;
+    font-size: 1.08rem;
+    font-weight: 800;
+    font-family: inherit;
+    letter-spacing: .3px;
+    padding: 16px 30px;
     cursor: pointer;
-    transition: transform .15s, box-shadow .15s;
-    box-shadow: 0 4px 18px rgba(255,110,196,.4);
+    transition: transform .15s, box-shadow .15s, filter .15s;
+    box-shadow: 0 6px 22px rgba(255,110,196,.45);
   }
 
-  .btn-add:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(255,110,196,.55); }
-  .btn-add:active { transform: translateY(0); }
+  .btn-add:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.08);
+    box-shadow: 0 8px 30px rgba(255,110,196,.6);
+  }
+  .btn-add:active { transform: translateY(0) scale(.98); }
 
   /* ---------- Task cards ---------- */
-  .task-list { display: flex; flex-direction: column; gap: 16px; }
+  .task-list { display: flex; flex-direction: column; gap: 18px; }
 
   .task {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 18px;
     border-radius: var(--card-radius);
-    padding: 18px 20px;
+    padding: 20px 22px;
     color: #fff;
-    box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    box-shadow: 0 10px 30px rgba(0,0,0,.38);
     animation: slideIn .35s ease both;
     position: relative;
     overflow: hidden;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+
+  .task:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 42px rgba(0,0,0,.45);
   }
 
   @keyframes slideIn {
-    from { opacity: 0; transform: translateY(14px) scale(.98); }
+    from { opacity: 0; transform: translateY(16px) scale(.98); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
   }
 
@@ -142,11 +195,12 @@
   .task .fill {
     position: absolute;
     inset: 0;
-    background: rgba(255,255,255,.16);
+    background: rgba(255,255,255,.17);
     transform-origin: left;
     transform: scaleX(0);
     transition: transform 1s linear;
     pointer-events: none;
+    will-change: transform;
   }
 
   .task > *:not(.fill) { position: relative; z-index: 1; }
@@ -172,7 +226,7 @@
   }
 
   /* timer ring */
-  .ring { flex-shrink: 0; width: 74px; height: 74px; position: relative; }
+  .ring { flex-shrink: 0; width: 86px; height: 86px; position: relative; }
 
   .ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
 
@@ -188,8 +242,12 @@
   .ring .progress {
     stroke: #fff;
     transition: stroke-dashoffset 1s linear;
+    filter: drop-shadow(0 0 5px rgba(255,255,255,.6));
   }
-  .task.c2 .ring .progress, .task.c3 .ring .progress { stroke: rgba(0,0,0,.65); }
+  .task.c2 .ring .progress, .task.c3 .ring .progress {
+    stroke: rgba(0,0,0,.65);
+    filter: none;
+  }
 
   .ring .time {
     position: absolute;
@@ -197,8 +255,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: .82rem;
-    font-weight: 700;
+    font-size: 1rem;
+    font-weight: 800;
     font-variant-numeric: tabular-nums;
     letter-spacing: .5px;
   }
@@ -206,24 +264,27 @@
   .task-body { flex: 1; min-width: 0; }
 
   .task-body .title {
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: -.2px;
     word-wrap: break-word;
-    margin-bottom: 4px;
+    margin-bottom: 5px;
+    text-shadow: 0 1px 3px rgba(0,0,0,.18);
   }
+  .task.c2 .title, .task.c3 .title { text-shadow: none; }
 
-  .task-body .meta { font-size: .82rem; opacity: .8; }
+  .task-body .meta { font-size: .95rem; font-weight: 600; opacity: .85; }
 
-  .task-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .task-actions { display: flex; gap: 9px; flex-shrink: 0; }
 
   .icon-btn {
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     border: none;
     background: rgba(255,255,255,.22);
     color: inherit;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -233,30 +294,43 @@
 
   .task.c2 .icon-btn, .task.c3 .icon-btn { background: rgba(0,0,0,.14); }
 
-  .icon-btn:hover { background: rgba(255,255,255,.38); transform: scale(1.1); }
+  .icon-btn:hover { background: rgba(255,255,255,.4); transform: scale(1.12); }
+  .icon-btn:active { transform: scale(1); }
   .task.c2 .icon-btn:hover, .task.c3 .icon-btn:hover { background: rgba(0,0,0,.25); }
 
   .empty {
     text-align: center;
-    padding: 60px 20px;
-    color: rgba(255,255,255,.45);
-    font-size: 1.05rem;
+    padding: 70px 20px;
+    color: rgba(255,255,255,.5);
+    font-size: 1.2rem;
+    font-weight: 500;
     border: 2px dashed rgba(255,255,255,.18);
     border-radius: var(--card-radius);
   }
 
-  .empty .big { font-size: 2.6rem; margin-bottom: 10px; }
+  .empty .big { font-size: 3rem; margin-bottom: 12px; }
 
   .stats {
     display: flex;
     justify-content: center;
-    gap: 24px;
-    margin-top: 28px;
-    color: rgba(255,255,255,.55);
-    font-size: .9rem;
+    gap: 28px;
+    margin-top: 32px;
+    color: rgba(255,255,255,.58);
+    font-size: 1rem;
+    font-weight: 500;
   }
 
-  .stats b { color: #fff; }
+  .stats b { color: #fff; font-weight: 800; }
+
+  @media (max-width: 540px) {
+    html { font-size: 16px; }
+    .task { flex-wrap: wrap; }
+    .task-actions { margin-left: auto; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
 </style>
 </head>
 <body>
@@ -296,9 +370,8 @@
 
   function load() {
     try {
-      const raw = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
       // running timers keep ticking across reloads via endsAt timestamps
-      return raw.map(t => ({ ...t }));
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     } catch { return []; }
   }
 
@@ -464,7 +537,7 @@
       `<span><b>${done}</b> done</span>`;
   }
 
-  // tick: update countdown displays without full re-render
+  // tick: update countdown displays in place without a full re-render
   setInterval(() => {
     let needsRender = false;
     for (const t of tasks) {
