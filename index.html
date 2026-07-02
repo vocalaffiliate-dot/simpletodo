@@ -425,6 +425,7 @@
     minutesInput.value = "30";
     save();
     render();
+    playAdd();
     taskInput.focus();
   });
 
@@ -568,7 +569,7 @@
         t.remaining = 0;
         t.endsAt = null;
         needsRender = true;
-        beep();
+        playChime();
         continue;
       }
       const el = listEl.querySelector(`.task[data-id="${t.id}"]`);
@@ -581,23 +582,46 @@
     if (needsRender) { save(); render(); }
   }, 1000);
 
-  function beep() {
+  let audioCtx = null;
+  function getAudioCtx() {
     try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const now = ctx.currentTime;
-      [0, 0.25, 0.5].forEach(offset => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = "sine";
-        osc.frequency.value = 880;
-        gain.gain.setValueAtTime(0.001, now + offset);
-        gain.gain.exponentialRampToValueAtTime(0.3, now + offset + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.2);
-        osc.connect(gain).connect(ctx.destination);
-        osc.start(now + offset);
-        osc.stop(now + offset + 0.22);
-      });
-    } catch { /* audio not available */ }
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      return audioCtx;
+    } catch { return null; /* audio not available */ }
+  }
+
+  function tone(ctx, freq, at, dur, peak) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, at);
+    gain.gain.exponentialRampToValueAtTime(peak, at + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(at);
+    osc.stop(at + dur + 0.05);
+  }
+
+  // soft rising two-note pop when a task is added
+  function playAdd() {
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    tone(ctx, 523.25, now, 0.18, 0.06);         // C5
+    tone(ctx, 783.99, now + 0.07, 0.25, 0.05);  // G5
+  }
+
+  // warm, quiet C-major chime when a timer runs out
+  function playChime() {
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    [[523.25, 0], [659.25, 0.16], [783.99, 0.32]].forEach(([freq, off]) => {
+      tone(ctx, freq, now + off, 0.9, 0.07);
+      tone(ctx, freq * 2, now + off, 0.45, 0.015); // faint octave shimmer
+    });
   }
 
   // mark already-expired running tasks on load
