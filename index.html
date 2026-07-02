@@ -308,7 +308,18 @@
     border-radius: var(--card-radius);
   }
 
-  .empty .big { font-size: 3rem; margin-bottom: 12px; }
+  .empty .pen {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 14px;
+    filter: drop-shadow(0 6px 18px rgba(120,115,245,.5));
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(-4deg); }
+    50% { transform: translateY(-8px) rotate(4deg); }
+  }
 
   .stats {
     display: flex;
@@ -452,8 +463,17 @@
     if (!tasks.length) {
       listEl.innerHTML = `
         <div class="empty">
-          <div class="big">🌈</div>
-          No tasks yet — add one above and beat the clock!
+          <svg class="pen" viewBox="0 0 24 24" aria-hidden="true">
+            <defs>
+              <linearGradient id="penGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#ff6ec4"/>
+                <stop offset="55%" stop-color="#7873f5"/>
+                <stop offset="100%" stop-color="#4adede"/>
+              </linearGradient>
+            </defs>
+            <path fill="url(#penGrad)" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+          </svg>
+          <div>No tasks yet — add one above and beat the clock!</div>
         </div>`;
       statsEl.innerHTML = "";
       return;
