@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TickTask — Colorful Timed To-Dos</title>
+<style>
+  :root {
+    --bg1: #0f0c29;
+    --bg2: #302b63;
+    --bg3: #24243e;
+    --card-radius: 20px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, var(--bg1), var(--bg2), var(--bg3));
+    background-attachment: fixed;
+    color: #fff;
+    padding: 40px 16px 80px;
+  }
+
+  .container { max-width: 720px; margin: 0 auto; }
+
+  header { text-align: center; margin-bottom: 32px; }
+
+  header h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    background: linear-gradient(90deg, #ff6ec4, #7873f5, #4adede, #ffe66d);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradientShift 6s ease infinite;
+  }
+
+  @keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  header p { color: rgba(255,255,255,.6); margin-top: 8px; font-size: 1rem; }
+
+  /* ---------- Add form ---------- */
+  .add-form {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    background: rgba(255,255,255,.08);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: var(--card-radius);
+    padding: 16px;
+    margin-bottom: 28px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.3);
+  }
+
+  .add-form input[type="text"] {
+    flex: 1 1 240px;
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 1rem;
+    color: #fff;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+
+  .add-form input[type="text"]::placeholder { color: rgba(255,255,255,.45); }
+
+  .add-form input[type="text"]:focus {
+    border-color: #7873f5;
+    box-shadow: 0 0 0 3px rgba(120,115,245,.3);
+  }
+
+  .minutes-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 12px;
+    padding: 0 12px;
+  }
+
+  .minutes-wrap input {
+    width: 56px;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 1rem;
+    text-align: center;
+    outline: none;
+    padding: 14px 0;
+  }
+
+  .minutes-wrap span { color: rgba(255,255,255,.55); font-size: .85rem; }
+
+  .btn-add {
+    background: linear-gradient(135deg, #ff6ec4, #7873f5);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 14px 26px;
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 4px 18px rgba(255,110,196,.4);
+  }
+
+  .btn-add:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(255,110,196,.55); }
+  .btn-add:active { transform: translateY(0); }
+
+  /* ---------- Task cards ---------- */
+  .task-list { display: flex; flex-direction: column; gap: 16px; }
+
+  .task {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-radius: var(--card-radius);
+    padding: 18px 20px;
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    animation: slideIn .35s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(14px) scale(.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* progress fill behind content */
+  .task .fill {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,.16);
+    transform-origin: left;
+    transform: scaleX(0);
+    transition: transform 1s linear;
+    pointer-events: none;
+  }
+
+  .task > *:not(.fill) { position: relative; z-index: 1; }
+
+  .task.c0 { background: linear-gradient(135deg, #f857a6, #ff5858); }
+  .task.c1 { background: linear-gradient(135deg, #7873f5, #4adede); }
+  .task.c2 { background: linear-gradient(135deg, #f7971e, #ffd200); color: #3a2a00; }
+  .task.c3 { background: linear-gradient(135deg, #11998e, #38ef7d); color: #06301e; }
+  .task.c4 { background: linear-gradient(135deg, #fc466b, #3f5efb); }
+  .task.c5 { background: linear-gradient(135deg, #c471ed, #f64f59); }
+
+  .task.done { filter: saturate(.35) brightness(.75); }
+  .task.done .title { text-decoration: line-through; opacity: .7; }
+
+  .task.expired { animation: shake .5s ease, slideIn 0s; }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+
+  /* timer ring */
+  .ring { flex-shrink: 0; width: 74px; height: 74px; position: relative; }
+
+  .ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+
+  .ring circle {
+    fill: none;
+    stroke-width: 6;
+    stroke-linecap: round;
+  }
+
+  .ring .track { stroke: rgba(255,255,255,.25); }
+  .task.c2 .ring .track, .task.c3 .ring .track { stroke: rgba(0,0,0,.15); }
+
+  .ring .progress {
+    stroke: #fff;
+    transition: stroke-dashoffset 1s linear;
+  }
+  .task.c2 .ring .progress, .task.c3 .ring .progress { stroke: rgba(0,0,0,.65); }
+
+  .ring .time {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .82rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .5px;
+  }
+
+  .task-body { flex: 1; min-width: 0; }
+
+  .task-body .title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    word-wrap: break-word;
+    margin-bottom: 4px;
+  }
+
+  .task-body .meta { font-size: .82rem; opacity: .8; }
+
+  .task-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+  .icon-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,.22);
+    color: inherit;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s, transform .15s;
+  }
+
+  .task.c2 .icon-btn, .task.c3 .icon-btn { background: rgba(0,0,0,.14); }
+
+  .icon-btn:hover { background: rgba(255,255,255,.38); transform: scale(1.1); }
+  .task.c2 .icon-btn:hover, .task.c3 .icon-btn:hover { background: rgba(0,0,0,.25); }
+
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: rgba(255,255,255,.45);
+    font-size: 1.05rem;
+    border: 2px dashed rgba(255,255,255,.18);
+    border-radius: var(--card-radius);
+  }
+
+  .empty .big { font-size: 2.6rem; margin-bottom: 10px; }
+
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 28px;
+    color: rgba(255,255,255,.55);
+    font-size: .9rem;
+  }
+
+  .stats b { color: #fff; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>⏱ TickTask</h1>
+      <p>Add a task, set the clock, and race the countdown.</p>
+    </header>
+
+    <form class="add-form" id="addForm">
+      <input type="text" id="taskInput" placeholder="What needs doing?" maxlength="120" autocomplete="off">
+      <div class="minutes-wrap">
+        <input type="number" id="minutesInput" value="30" min="1" max="999">
+        <span>min</span>
+      </div>
+      <button type="submit" class="btn-add">+ Add</button>
+    </form>
+
+    <div class="task-list" id="taskList"></div>
+
+    <div class="stats" id="stats"></div>
+  </div>
+
+<script>
+(() => {
+  const STORAGE_KEY = "ticktask.tasks.v1";
+  const RADIUS = 32;
+  const CIRC = 2 * Math.PI * RADIUS;
+
+  let tasks = load();
+
+  const form = document.getElementById("addForm");
+  const taskInput = document.getElementById("taskInput");
+  const minutesInput = document.getElementById("minutesInput");
+  const listEl = document.getElementById("taskList");
+  const statsEl = document.getElementById("stats");
+
+  function load() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      // running timers keep ticking across reloads via endsAt timestamps
+      return raw.map(t => ({ ...t }));
+    } catch { return []; }
+  }
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  }
+
+  function remainingSeconds(t) {
+    if (t.status === "running") {
+      return Math.max(0, Math.round((t.endsAt - Date.now()) / 1000));
+    }
+    return t.remaining;
+  }
+
+  function fmt(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    if (m >= 60) {
+      const h = Math.floor(m / 60);
+      return `${h}:${String(m % 60).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+    return `${m}:${String(s).padStart(2, "0")}`;
+  }
+
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    const title = taskInput.value.trim();
+    const minutes = Math.min(999, Math.max(1, parseInt(minutesInput.value, 10) || 30));
+    if (!title) { taskInput.focus(); return; }
+    tasks.unshift({
+      id: Date.now() + Math.random().toString(36).slice(2),
+      title,
+      total: minutes * 60,
+      remaining: minutes * 60,
+      status: "idle",          // idle | running | paused | done | expired
+      endsAt: null,
+      color: tasks.length % 6
+    });
+    taskInput.value = "";
+    minutesInput.value = "30";
+    save();
+    render();
+    taskInput.focus();
+  });
+
+  function action(id, act) {
+    const t = tasks.find(x => x.id === id);
+    if (!t) return;
+    if (act === "delete") {
+      tasks = tasks.filter(x => x.id !== id);
+    } else if (act === "start") {
+      t.status = "running";
+      t.endsAt = Date.now() + t.remaining * 1000;
+    } else if (act === "pause") {
+      t.remaining = remainingSeconds(t);
+      t.status = "paused";
+      t.endsAt = null;
+    } else if (act === "done") {
+      t.remaining = remainingSeconds(t);
+      t.status = "done";
+      t.endsAt = null;
+    } else if (act === "reset") {
+      t.status = "idle";
+      t.remaining = t.total;
+      t.endsAt = null;
+    }
+    save();
+    render();
+  }
+
+  listEl.addEventListener("click", e => {
+    const btn = e.target.closest("button[data-act]");
+    if (!btn) return;
+    action(btn.closest(".task").dataset.id, btn.dataset.act);
+  });
+
+  function render() {
+    if (!tasks.length) {
+      listEl.innerHTML = `
+        <div class="empty">
+          <div class="big">🌈</div>
+          No tasks yet — add one above and beat the clock!
+        </div>`;
+      statsEl.innerHTML = "";
+      return;
+    }
+
+    listEl.innerHTML = tasks.map(t => {
+      const rem = remainingSeconds(t);
+      const frac = t.total ? rem / t.total : 0;
+      const offset = CIRC * (1 - frac);
+      const elapsedFrac = 1 - frac;
+
+      let statusLabel, buttons;
+      if (t.status === "done") {
+        statusLabel = "✅ Completed";
+        buttons = `
+          <button class="icon-btn" data-act="reset" title="Restart">↺</button>
+          <button class="icon-btn" data-act="delete" title="Delete">🗑</button>`;
+      } else if (t.status === "expired") {
+        statusLabel = "⏰ Time's up!";
+        buttons = `
+          <button class="icon-btn" data-act="reset" title="Restart">↺</button>
+          <button class="icon-btn" data-act="done" title="Mark done">✔</button>
+          <button class="icon-btn" data-act="delete" title="Delete">🗑</button>`;
+      } else if (t.status === "running") {
+        statusLabel = "🔥 In progress";
+        buttons = `
+          <button class="icon-btn" data-act="pause" title="Pause">⏸</button>
+          <button class="icon-btn" data-act="done" title="Mark done">✔</button>
+          <button class="icon-btn" data-act="delete" title="Delete">🗑</button>`;
+      } else if (t.status === "paused") {
+        statusLabel = "⏸ Paused";
+        buttons = `
+          <button class="icon-btn" data-act="start" title="Resume">▶</button>
+          <button class="icon-btn" data-act="done" title="Mark done">✔</button>
+          <button class="icon-btn" data-act="delete" title="Delete">🗑</button>`;
+      } else {
+        statusLabel = `🕒 Ready · ${Math.round(t.total / 60)} min`;
+        buttons = `
+          <button class="icon-btn" data-act="start" title="Start">▶</button>
+          <button class="icon-btn" data-act="done" title="Mark done">✔</button>
+          <button class="icon-btn" data-act="delete" title="Delete">🗑</button>`;
+      }
+
+      const cls = [
+        "task", "c" + t.color,
+        t.status === "done" ? "done" : "",
+        t.status === "expired" ? "expired" : ""
+      ].join(" ");
+
+      return `
+        <div class="${cls}" data-id="${t.id}">
+          <div class="fill" style="transform: scaleX(${elapsedFrac.toFixed(4)})"></div>
+          <div class="ring">
+            <svg viewBox="0 0 74 74">
+              <circle class="track" cx="37" cy="37" r="${RADIUS}"></circle>
+              <circle class="progress" cx="37" cy="37" r="${RADIUS}"
+                stroke-dasharray="${CIRC.toFixed(2)}"
+                stroke-dashoffset="${offset.toFixed(2)}"></circle>
+            </svg>
+            <div class="time">${t.status === "done" ? "✓" : fmt(rem)}</div>
+          </div>
+          <div class="task-body">
+            <div class="title"></div>
+            <div class="meta">${statusLabel}</div>
+          </div>
+          <div class="task-actions">${buttons}</div>
+        </div>`;
+    }).join("");
+
+    // set titles via textContent to avoid HTML injection
+    listEl.querySelectorAll(".task").forEach(el => {
+      const t = tasks.find(x => x.id === el.dataset.id);
+      if (t) el.querySelector(".title").textContent = t.title;
+    });
+
+    const running = tasks.filter(t => t.status === "running").length;
+    const done = tasks.filter(t => t.status === "done").length;
+    statsEl.innerHTML =
+      `<span><b>${tasks.length}</b> total</span>` +
+      `<span><b>${running}</b> running</span>` +
+      `<span><b>${done}</b> done</span>`;
+  }
+
+  // tick: update countdown displays without full re-render
+  setInterval(() => {
+    let needsRender = false;
+    for (const t of tasks) {
+      if (t.status !== "running") continue;
+      const rem = remainingSeconds(t);
+      if (rem <= 0) {
+        t.status = "expired";
+        t.remaining = 0;
+        t.endsAt = null;
+        needsRender = true;
+        beep();
+        continue;
+      }
+      const el = listEl.querySelector(`.task[data-id="${t.id}"]`);
+      if (!el) continue;
+      el.querySelector(".time").textContent = fmt(rem);
+      const frac = rem / t.total;
+      el.querySelector(".progress").style.strokeDashoffset = (CIRC * (1 - frac)).toFixed(2);
+      el.querySelector(".fill").style.transform = `scaleX(${(1 - frac).toFixed(4)})`;
+    }
+    if (needsRender) { save(); render(); }
+  }, 1000);
+
+  function beep() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const now = ctx.currentTime;
+      [0, 0.25, 0.5].forEach(offset => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.001, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.3, now + offset + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.2);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now + offset);
+        osc.stop(now + offset + 0.22);
+      });
+    } catch { /* audio not available */ }
+  }
+
+  // mark already-expired running tasks on load
+  for (const t of tasks) {
+    if (t.status === "running" && remainingSeconds(t) <= 0) {
+      t.status = "expired";
+      t.remaining = 0;
+      t.endsAt = null;
+    }
+  }
+  save();
+  render();
+})();
+</script>
+</body>
+</html>
